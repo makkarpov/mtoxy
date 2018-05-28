@@ -10,6 +10,7 @@ import io.netty.channel.socket.nio.NioSocketChannel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import ru.makkarpov.mtoxy.network.ProtocolDetector;
+import ru.makkarpov.mtoxy.stats.StatisticsTracker;
 import ru.makkarpov.mtoxy.util.Configuration;
 
 import javax.inject.Inject;
@@ -25,12 +26,14 @@ public class MTServer {
     private Set<Channel> masterChannels = new HashSet<>();
 
     private Configuration cfg;
+    private StatisticsTracker statisticsTracker;
     private NioEventLoopGroup bossGroup;
     private NioEventLoopGroup workerGroup;
 
     @Inject
-    public MTServer(Configuration cfg) {
+    public MTServer(Configuration cfg, StatisticsTracker statisticsTracker) {
         this.cfg = cfg;
+        this.statisticsTracker = statisticsTracker;
         bossGroup = new NioEventLoopGroup(cfg.getBossThreads());
         workerGroup = new NioEventLoopGroup(cfg.getWorkerThreads());
     }
@@ -44,7 +47,7 @@ public class MTServer {
                 .childHandler(new ChannelInitializer<NioSocketChannel>() {
                     @Override
                     protected void initChannel(NioSocketChannel ch) throws Exception {
-                        ch.pipeline().addLast(new ProtocolDetector(MTServer.this, cfg));
+                        ch.pipeline().addLast(new ProtocolDetector(MTServer.this));
                     }
                 });
 
@@ -53,6 +56,14 @@ public class MTServer {
         }
 
         LOG.info("MTProto server was started successfully");
+    }
+
+    public Configuration getConfiguration() {
+        return cfg;
+    }
+
+    public StatisticsTracker getStatisticsTracker() {
+        return statisticsTracker;
     }
 
     public NioEventLoopGroup getBossGroup() {

@@ -8,6 +8,7 @@ import com.typesafe.config.ConfigFactory;
 import joptsimple.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import ru.makkarpov.mtoxy.stats.StatisticsReporter;
 
 import javax.inject.Inject;
 import java.io.File;
@@ -70,14 +71,17 @@ public class MToxy {
     }
 
     private MTServer mtServer;
+    private StatisticsReporter reporter;
 
     @Inject
-    public MToxy(MTServer mtServer) {
+    public MToxy(MTServer mtServer, StatisticsReporter reporter) {
         this.mtServer = mtServer;
+        this.reporter = reporter;
     }
 
     private void run() {
         LOG.info("Starting mtoxy...");
         mtServer.start();
+        reporter.run();
     }
 }

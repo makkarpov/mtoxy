@@ -6,6 +6,7 @@ mtoxy
 * Fully asynchronous and non-blocking: 4 threads to handle a lot of connections;
 * Built-in support for HTTP passthrough: some public Wi-Fi networks block connections to a non-standard ports, so run your proxy on 80 port without having to sacrifice your web server;
 * Proxy through proxy: this is feature is mainly useful at development, since I cannot reach Telegram servers directly in Russia;
+* Collection of a traffic statistics.
 
 Setting it up
 =============
@@ -63,5 +64,8 @@ mtoxy {
   # Worker threads to use. All AES encryption and forwarding logic will be run on these threads.
   # Set it to the number of your CPU cores.
   worker-threads = 4
+  
+  # Interval between statistics reports to console. Set to 0 to disable.
+  statistics-report-interval = 1m
 }
 ```

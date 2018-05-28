@@ -7,7 +7,7 @@ import io.netty.channel.socket.nio.NioSocketChannel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import ru.makkarpov.mtoxy.MTServer;
-import ru.makkarpov.mtoxy.util.Configuration;
+import ru.makkarpov.mtoxy.stats.ConnectionType;
 
 import java.net.InetSocketAddress;
 
@@ -15,22 +15,24 @@ import java.net.InetSocketAddress;
 public class ProtocolDetector extends ChannelInboundHandlerAdapter {
     private static final Logger LOG = LoggerFactory.getLogger(ProtocolDetector.class);
 
-    private MTServer mtServer;
-    private Configuration cfg;
+    private MTServer server;
+    private StatisticsHandler httpStatistics, mtStatistics;
 
-    public ProtocolDetector(MTServer mtServer, Configuration cfg) {
-        this.mtServer = mtServer;
-        this.cfg = cfg;
+    public ProtocolDetector(MTServer server) {
+        this.server = server;
+
+        httpStatistics = new StatisticsHandler(server.getStatisticsTracker(), ConnectionType.HTTP);
+        mtStatistics = new StatisticsHandler(server.getStatisticsTracker(), ConnectionType.MTPROTO);
     }
 
     private void setupHttpConnection(ChannelHandlerContext ctx, Object msg) {
-        if (!cfg.hasHttpBackend()) {
+        if (!server.getConfiguration().hasHttpBackend()) {
             ctx.close();
             return;
         }
 
         Bootstrap bs = new Bootstrap()
-                .group(mtServer.getWorkerGroup())
+                .group(server.getWorkerGroup())
                 .channel(NioSocketChannel.class)
                 .handler(new ChannelInitializer<NioSocketChannel>() {
                     @Override
@@ -39,11 +41,12 @@ public class ProtocolDetector extends ChannelInboundHandlerAdapter {
                     }
                 });
 
-        InetSocketAddress backend = cfg.getHttpBackend();
+        InetSocketAddress backend = server.getConfiguration().getHttpBackend();
         ChannelFuture future = bs.connect(backend);
         future.addListener(f -> {
             Channel ch = future.channel();
             if (future.isSuccess()) {
+                ctx.channel().pipeline().addFirst(httpStatistics);
                 ForwardingHandler.setupForwarding(ctx.channel(), ch);
                 ctx.pipeline().fireChannelRead(msg);
             } else {
@@ -56,8 +59,11 @@ public class ProtocolDetector extends ChannelInboundHandlerAdapter {
 
     private void setupMtConnection(ChannelHandlerContext ctx, Object msg) {
         ctx.pipeline().remove(this);
-        ctx.pipeline().addLast(new Obfuscated2Handshaker(false, cfg.getSecretKey()));
-        ctx.pipeline().addLast(new DatacenterConnectionHandler(mtServer, cfg));
+        ctx.pipeline().addLast(
+                mtStatistics,
+                new Obfuscated2Handshaker(false, server.getConfiguration().getSecretKey()),
+                new DatacenterConnectionHandler(server)
+        );
         ctx.pipeline().fireChannelRead(msg);
     }
 

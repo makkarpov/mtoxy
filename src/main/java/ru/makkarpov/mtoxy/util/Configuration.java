@@ -17,6 +17,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 
 @Singleton
 public class Configuration {
@@ -32,6 +33,7 @@ public class Configuration {
     private InetSocketAddress httpBackend;
 
     private int bossThreads, workerThreads;
+    private long statisticsReportInterval;
 
     @Inject
     public Configuration(Config underlying) {
@@ -111,6 +113,8 @@ public class Configuration {
         bossThreads = underlying.getInt("boss-threads");
         workerThreads = underlying.getInt("worker-threads");
 
+        statisticsReportInterval = underlying.getDuration("statistics-report-interval", TimeUnit.MILLISECONDS);
+
         LOG.info("Loaded configuration values:");
         LOG.info(" .. secret key: {}", DatatypeConverter.printHexBinary(secretKey));
         LOG.info(" .. peers:");
@@ -129,6 +133,8 @@ public class Configuration {
                 .map(InetSocketAddress::toString).orElse("<none, drop connections>"));
 
         LOG.info(" .. boss threads: {}, worker threads: {}", bossThreads, workerThreads);
+        LOG.info(" .. statistics report interval: {}",
+                (statisticsReportInterval == 0) ? "<disabled>" : Utils.formatTime(statisticsReportInterval));
     }
 
     public byte[] getSecretKey() {
@@ -158,5 +164,9 @@ public class Configuration {
 
     public int getWorkerThreads() {
         return workerThreads;
+    }
+
+    public long getStatisticsReportInterval() {
+        return statisticsReportInterval;
     }
 }

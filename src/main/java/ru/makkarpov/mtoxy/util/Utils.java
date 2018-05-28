@@ -36,4 +36,58 @@ public class Utils {
             x[x.length - i - 1] = temp;
         }
     }
+
+    public static String formatTime(long millis) {
+        String unit = "ms";
+        float time = millis;
+
+        if (time >= 1000) {
+            time /= 1000;
+            unit = "s";
+        }
+
+        if (time >= 60) {
+            time /= 60;
+            unit = "m";
+        }
+
+        if (time >= 60) {
+            time /= 60;
+            unit = "h";
+        }
+
+        if (time >= 24) {
+            time /= 24;
+            unit = "d";
+        }
+
+        return String.format("%.1f %s", time, unit);
+    }
+
+    public static String formatSize(long bytes) {
+        String unit = "B";
+        float count = bytes;
+
+        if (count >= 1024) {
+            count /= 1024;
+            unit = "kB";
+        }
+
+        if (count >= 1024) {
+            count /= 1024;
+            unit = "MB";
+        }
+
+        if (count >= 1024) {
+            count /= 1024;
+            unit = "GB";
+        }
+
+        if (count >= 1024) {
+            count /= 1024;
+            unit = "TB";
+        }
+
+        return String.format("%.1f %s", count, unit);
+    }
 }

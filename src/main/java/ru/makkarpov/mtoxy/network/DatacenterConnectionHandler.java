@@ -8,7 +8,7 @@ import io.netty.channel.socket.nio.NioSocketChannel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import ru.makkarpov.mtoxy.MTServer;
-import ru.makkarpov.mtoxy.util.Configuration;
+import ru.makkarpov.mtoxy.stats.ConnectionType;
 import ru.makkarpov.mtoxy.util.PeerRecord;
 
 import java.util.List;
@@ -21,12 +21,10 @@ public class DatacenterConnectionHandler extends ChannelInboundHandlerAdapter {
     private static final Logger LOG = LoggerFactory.getLogger(DatacenterConnectionHandler.class);
 
     private MTServer server;
-    private Configuration cfg;
     private CompositeByteBuf awaitingMessages;
 
-    public DatacenterConnectionHandler(MTServer server, Configuration cfg) {
+    public DatacenterConnectionHandler(MTServer server) {
         this.server = server;
-        this.cfg = cfg;
     }
 
     @Override
@@ -42,7 +40,7 @@ public class DatacenterConnectionHandler extends ChannelInboundHandlerAdapter {
             ctx.channel().config().setAutoRead(false);
 
             int dcNumber = ((Obfuscated2Handshaker.HandshakeCompletedMessage) msg).getDatacenterNumber();
-            List<PeerRecord> peers = cfg.getPeers();
+            List<PeerRecord> peers = server.getConfiguration().getPeers();
             PeerRecord peer = peers.get(dcNumber % peers.size());
             Obfuscated2Handshaker handshaker = Obfuscated2Handshaker.fromPeer(peer, dcNumber);
 
@@ -77,6 +75,7 @@ public class DatacenterConnectionHandler extends ChannelInboundHandlerAdapter {
                     LOG.error("Failed to connect to peer: {} -> {}", ctx.channel().remoteAddress(),
                             peer.getAddress(), future.cause());
                     ctx.channel().close();
+                    server.getStatisticsTracker().connectionFailed(ConnectionType.MTPROTO);
                 }
             });
         } else if (msg instanceof ByteBuf) {
