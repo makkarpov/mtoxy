@@ -3,6 +3,7 @@ package ru.makkarpov.mtoxy.network;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.MessageToMessageCodec;
+import io.netty.util.ReferenceCountUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import ru.makkarpov.mtoxy.util.AESCTR;
@@ -25,11 +26,10 @@ public class Obfuscated2Codec extends MessageToMessageCodec<Object, Object> {
 
     private void process(AESCTR cipher, Object msg, List<Object> out) {
         if (msg instanceof ByteBuf) {
-            ByteBuf buf = (ByteBuf) msg;
-            buf.retain();
-            cipher.processBuffer(buf);
+            cipher.processBuffer((ByteBuf) msg);
         }
 
+        ReferenceCountUtil.retain(msg);
         out.add(msg);
     }
 

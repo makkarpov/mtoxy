@@ -1,6 +1,5 @@
 package ru.makkarpov.mtoxy.network;
 
-import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
@@ -25,13 +24,6 @@ public class ForwardingHandler extends ChannelInboundHandlerAdapter {
 
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
-        if (msg instanceof ByteBuf) {
-            ByteBuf buf = (ByteBuf) msg;
-            byte[] x = new byte[buf.readableBytes()];
-            buf.getBytes(buf.readerIndex(), x);
-//            LOG.info("forward {} -> {}: {}", ctx.channel().remoteAddress(), to.remoteAddress(), DatatypeConverter.printHexBinary(x));
-        }
-
         to.writeAndFlush(msg);
     }
 
