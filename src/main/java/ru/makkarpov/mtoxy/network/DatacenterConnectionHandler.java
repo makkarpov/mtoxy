@@ -57,11 +57,17 @@ public class DatacenterConnectionHandler extends ChannelInboundHandlerAdapter {
                     // Wait for handshake:
                     handshaker.getHandshakePromise().addListener(f1 -> {
                         Channel ch = future.channel();
-                        if (f.isSuccess()) {
+
+                        // Are we still connected?
+                        if (!ctx.channel().isRegistered()) {
+                            ch.close();
+                            return;
+                        }
+
+                        if (f1.isSuccess()) {
                             // Setup forwarding and resume reading
                             ForwardingHandler.setupForwarding(ctx.channel(), ch);
-
-                            ctx.channel().pipeline().remove(this);
+                            ctx.channel().pipeline().remove(DatacenterConnectionHandler.this);
                             // Inject awaiting messages right after codec:
                             ctx.channel().pipeline().context(Obfuscated2Codec.class).fireChannelRead(awaitingMessages);
                             ctx.channel().config().setAutoRead(true);
