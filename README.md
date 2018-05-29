@@ -5,13 +5,13 @@ mtoxy
 
 * Fully asynchronous and non-blocking: 4 threads to handle a lot of connections;
 * Built-in support for HTTP passthrough: some public Wi-Fi networks block connections to a non-standard ports, so run your proxy on 80 port without having to sacrifice your web server;
-* Proxy through proxy: this is feature is mainly useful at development, since I cannot reach Telegram servers directly in Russia;
+* Proxy through proxy: this is a feature that is mainly useful at development, since I cannot reach Telegram servers directly in Russia;
 * Collection of a traffic statistics.
 
 Setting it up
 =============
 
-Download the latest release, create a config file `config.conf` like this and run JAR — that's all!
+Download the latest release, create a config file `config.conf` like this and run JAR — that's all! Proxy will listen on 8443 port by default.
 
 ```
 mtoxy {
@@ -34,7 +34,7 @@ mtoxy {
   # Secret key to use with proxy, specified as some passphrase that will be hashed
   secret-passphrase = "correct-horse-battery-staple"
 
-  # Peers to connect. By default they are Telegram datacenters, but you can specify you own.
+  # Peers to connect. By default they are Telegram datacenters, but you can specify your own.
   # With "direct://..." URLs the connection will be made using Obufscated2 protocol without a secret key
   # With "proxy://.../<secret>" URLs the connection will be made using modified Obfuscated2 protocol with a secret.
   # So if you want to use another proxy as your upstream - specify it here as your only peer.
