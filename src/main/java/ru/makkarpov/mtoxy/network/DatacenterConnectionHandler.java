@@ -1,10 +1,9 @@
 package ru.makkarpov.mtoxy.network;
 
-import io.netty.bootstrap.Bootstrap;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.CompositeByteBuf;
 import io.netty.channel.*;
-import io.netty.channel.socket.nio.NioSocketChannel;
+import io.netty.channel.socket.SocketChannel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import ru.makkarpov.mtoxy.MTServer;
@@ -44,13 +43,10 @@ public class DatacenterConnectionHandler extends ChannelInboundHandlerAdapter {
             PeerRecord peer = peers.get(dcNumber % peers.size());
             Obfuscated2Handshaker handshaker = Obfuscated2Handshaker.fromPeer(peer, dcNumber);
 
-            ChannelFuture future = new Bootstrap()
-                    .channel(NioSocketChannel.class)
-                    .group(server.getWorkerGroup())
-                    .remoteAddress(peer.getAddress())
-                    .handler(new ChannelInitializer<NioSocketChannel>() {
+            ChannelFuture future = server.getBootstrap(peer.getAddress())
+                    .handler(new ChannelInitializer<SocketChannel>() {
                         @Override
-                        protected void initChannel(NioSocketChannel ch) throws Exception {
+                        protected void initChannel(SocketChannel ch) throws Exception {
                             ch.pipeline().addLast(handshaker);
                         }
                     })

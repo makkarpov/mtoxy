@@ -3,7 +3,7 @@ package ru.makkarpov.mtoxy.network;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.*;
-import io.netty.channel.socket.nio.NioSocketChannel;
+import io.netty.channel.socket.SocketChannel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import ru.makkarpov.mtoxy.MTServer;
@@ -31,18 +31,16 @@ public class ProtocolDetector extends ChannelInboundHandlerAdapter {
             return;
         }
 
-        Bootstrap bs = new Bootstrap()
-                .group(server.getWorkerGroup())
-                .channel(NioSocketChannel.class)
-                .handler(new ChannelInitializer<NioSocketChannel>() {
+        InetSocketAddress backend = server.getConfiguration().getHttpBackend();
+        Bootstrap bs = server.getBootstrap(backend)
+                .handler(new ChannelInitializer<SocketChannel>() {
                     @Override
-                    protected void initChannel(NioSocketChannel ch) throws Exception {
+                    protected void initChannel(SocketChannel ch) throws Exception {
                         // Dummy, that is needed.
                     }
                 });
 
-        InetSocketAddress backend = server.getConfiguration().getHttpBackend();
-        ChannelFuture future = bs.connect(backend);
+        ChannelFuture future = bs.connect();
         future.addListener(f -> {
             Channel ch = future.channel();
             if (future.isSuccess()) {

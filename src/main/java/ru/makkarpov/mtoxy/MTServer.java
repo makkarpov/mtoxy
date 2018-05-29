@@ -1,12 +1,12 @@
 package ru.makkarpov.mtoxy;
 
+import io.netty.bootstrap.Bootstrap;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelOption;
-import io.netty.channel.nio.NioEventLoopGroup;
-import io.netty.channel.socket.nio.NioServerSocketChannel;
-import io.netty.channel.socket.nio.NioSocketChannel;
+import io.netty.channel.EventLoopGroup;
+import io.netty.channel.socket.SocketChannel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import ru.makkarpov.mtoxy.network.ProtocolDetector;
@@ -27,26 +27,25 @@ public class MTServer {
 
     private Configuration cfg;
     private StatisticsTracker statisticsTracker;
-    private NioEventLoopGroup bossGroup;
-    private NioEventLoopGroup workerGroup;
+    private EventLoopGroup bossGroup;
+    private EventLoopGroup workerGroup;
 
     @Inject
     public MTServer(Configuration cfg, StatisticsTracker statisticsTracker) {
         this.cfg = cfg;
         this.statisticsTracker = statisticsTracker;
-        bossGroup = new NioEventLoopGroup(cfg.getBossThreads());
-        workerGroup = new NioEventLoopGroup(cfg.getWorkerThreads());
+        bossGroup = cfg.getNetworkTransport().createEventLoopGroup(cfg.getBossThreads());
+        workerGroup = cfg.getNetworkTransport().createEventLoopGroup(cfg.getWorkerThreads());
     }
 
     public void start() {
-
         ServerBootstrap sb = new ServerBootstrap()
                 .group(bossGroup, workerGroup)
-                .channel(NioServerSocketChannel.class)
+                .channel(cfg.getNetworkTransport().serverSocketChannel)
                 .option(ChannelOption.SO_BACKLOG, 128)
-                .childHandler(new ChannelInitializer<NioSocketChannel>() {
+                .childHandler(new ChannelInitializer<SocketChannel>() {
                     @Override
-                    protected void initChannel(NioSocketChannel ch) throws Exception {
+                    protected void initChannel(SocketChannel ch) throws Exception {
                         ch.pipeline().addLast(new ProtocolDetector(MTServer.this));
                     }
                 });
@@ -66,11 +65,18 @@ public class MTServer {
         return statisticsTracker;
     }
 
-    public NioEventLoopGroup getBossGroup() {
+    public EventLoopGroup getBossGroup() {
         return bossGroup;
     }
 
-    public NioEventLoopGroup getWorkerGroup() {
+    public EventLoopGroup getWorkerGroup() {
         return workerGroup;
+    }
+
+    public Bootstrap getBootstrap(InetSocketAddress remote) {
+        return new Bootstrap()
+                .group(getWorkerGroup())
+                .channel(cfg.getNetworkTransport().socketChannel)
+                .remoteAddress(remote);
     }
 }

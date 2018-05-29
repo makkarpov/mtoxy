@@ -3,6 +3,7 @@ package ru.makkarpov.mtoxy.util;
 import com.typesafe.config.Config;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import ru.makkarpov.mtoxy.network.NetworkTransport;
 
 import javax.annotation.Nullable;
 import javax.inject.Inject;
@@ -34,6 +35,7 @@ public class Configuration {
 
     private int bossThreads, workerThreads;
     private long statisticsReportInterval;
+    private NetworkTransport networkTransport;
 
     @Inject
     public Configuration(Config underlying) {
@@ -112,8 +114,18 @@ public class Configuration {
 
         bossThreads = underlying.getInt("boss-threads");
         workerThreads = underlying.getInt("worker-threads");
-
         statisticsReportInterval = underlying.getDuration("statistics-report-interval", TimeUnit.MILLISECONDS);
+
+        String s = underlying.getString("network-transport");
+        try {
+            networkTransport = NetworkTransport.valueOf(s.toUpperCase());
+
+            if (!networkTransport.isAvailable) {
+                throw new IllegalArgumentException("Network transport " + s + " is not available on your system");
+            }
+        } catch (Exception e) {
+            throw new IllegalArgumentException("Invalid network transport specified: " + s, e);
+        }
 
         LOG.info("Loaded configuration values:");
         LOG.info(" .. secret key: {}", DatatypeConverter.printHexBinary(secretKey));
@@ -135,6 +147,8 @@ public class Configuration {
         LOG.info(" .. boss threads: {}, worker threads: {}", bossThreads, workerThreads);
         LOG.info(" .. statistics report interval: {}",
                 (statisticsReportInterval == 0) ? "<disabled>" : Utils.formatTime(statisticsReportInterval));
+
+        LOG.info(" .. network transport: {}", networkTransport.name().toLowerCase());
     }
 
     public byte[] getSecretKey() {
@@ -168,5 +182,9 @@ public class Configuration {
 
     public long getStatisticsReportInterval() {
         return statisticsReportInterval;
+    }
+
+    public NetworkTransport getNetworkTransport() {
+        return networkTransport;
     }
 }

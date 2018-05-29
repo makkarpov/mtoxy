@@ -4,6 +4,7 @@ mtoxy
 **mtoxy** is a Java implementation of a Telegram MTProto proxy protocol. It has the following features:
 
 * Fully asynchronous and non-blocking: 4 threads to handle a lot of connections;
+* Supports `epoll` or `kqueue`-based transport on Linux/MacOS/BSD to further increase performance;
 * Built-in support for HTTP passthrough: some public Wi-Fi networks block connections to a non-standard ports, so run your proxy on 80 port without having to sacrifice your web server;
 * Proxy through proxy: this is a feature that is mainly useful at development, since I cannot reach Telegram servers directly in Russia;
 * Collection of a traffic statistics.
@@ -64,6 +65,12 @@ mtoxy {
   # Worker threads to use. All AES encryption and forwarding logic will be run on these threads.
   # Set it to the number of your CPU cores.
   worker-threads = 4
+  
+  # Network transport to use. Allowed values:
+  # * 'nio': Java NIO transport, works on most operating systems
+  # * 'epoll': epoll()-based transport, works only on Linux
+  # * 'kqueue': kqueue()-based transport, works only on MacOS/BSD
+  network-transport = nio
   
   # Interval between statistics reports to console. Set to 0 to disable.
   statistics-report-interval = 1m
