@@ -54,11 +54,11 @@ public class Utils {
         if (time >= 60) {
             time /= 60;
             unit = "h";
-        }
 
-        if (time >= 24) {
-            time /= 24;
-            unit = "d";
+            if (time >= 24) {
+                time /= 24;
+                unit = "d";
+            }
         }
 
         return String.format("%.1f %s", time, unit);
