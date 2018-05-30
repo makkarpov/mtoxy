@@ -57,7 +57,7 @@ public class Obfuscated2Handshaker extends ChannelInboundHandlerAdapter {
     private byte[] secret;
 
     /**
-     * Datacenter number when connecting as client
+     * Datacenter number when connecting as client. Note that this number will be sent as-is, without any processing.
      */
     private int datacenterNumber;
 
@@ -126,7 +126,7 @@ public class Obfuscated2Handshaker extends ChannelInboundHandlerAdapter {
 
             randomBuf.markWriterIndex();
             randomBuf.writerIndex(PROTOCOL_SIGNATURE_OFFSET + PROTOCOL_SIGNATURE_LENGTH);
-            randomBuf.writeShortLE(datacenterNumber + 1);
+            randomBuf.writeShortLE(datacenterNumber);
             randomBuf.resetWriterIndex();
 
             setupCiphers(randomBuf);
@@ -160,7 +160,7 @@ public class Obfuscated2Handshaker extends ChannelInboundHandlerAdapter {
                 return;
             }
 
-            int dcIndex = handshakeBuffer.readUnsignedShortLE() - 1;
+            int dcIndex = handshakeBuffer.readShortLE();
 
             // Replace ourselves and fire channel read for the rest of message:
             ctx.pipeline().replace(this, "codec", new Obfuscated2Codec(encrypter, decrypter));

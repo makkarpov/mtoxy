@@ -40,7 +40,8 @@ public class DatacenterConnectionHandler extends ChannelInboundHandlerAdapter {
 
             int dcNumber = ((Obfuscated2Handshaker.HandshakeCompletedMessage) msg).getDatacenterNumber();
             List<PeerRecord> peers = server.getConfiguration().getPeers();
-            PeerRecord peer = peers.get(dcNumber % peers.size());
+            int peerNumber = (Math.abs(dcNumber) - 1) % peers.size();
+            PeerRecord peer = peers.get(peerNumber);
             Obfuscated2Handshaker handshaker = Obfuscated2Handshaker.fromPeer(peer, dcNumber);
 
             ChannelFuture future = server.getBootstrap(peer.getAddress())
